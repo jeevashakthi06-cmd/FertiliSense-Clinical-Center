@@ -1,0 +1,437 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FertiliSense Clinic — WhatsApp Bot Demo</title>
+<style>
+  :root{
+    --wa-header:#075E54;
+    --wa-header-dark:#054c40;
+    --wa-teal-light:#128C7E;
+    --wa-bg:#ECE5DD;
+    --bubble-in:#FFFFFF;
+    --bubble-out:#DCF8C6;
+    --text-dark:#111B21;
+    --text-muted:#667781;
+    --accent-green:#25D366;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:'Segoe UI',Helvetica,Arial,sans-serif;
+    background:#0b141a;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    min-height:100vh;
+    padding:20px;
+  }
+  .phone{
+    width:390px;
+    height:780px;
+    background:var(--wa-bg);
+    border-radius:36px;
+    box-shadow:0 20px 60px rgba(0,0,0,.5);
+    overflow:hidden;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    border:8px solid #1c1c1c;
+  }
+  .statusbar{
+    background:var(--wa-header);
+    color:#fff;
+    font-size:13px;
+    padding:8px 20px 2px;
+    display:flex;
+    justify-content:space-between;
+    font-weight:600;
+  }
+  .header{
+    background:var(--wa-header);
+    color:#fff;
+    padding:8px 12px 14px;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .header .back{font-size:20px;opacity:.9;}
+  .avatar{
+    width:38px;height:38px;border-radius:50%;
+    background:linear-gradient(135deg,#25D366,#128C7E);
+    display:flex;align-items:center;justify-content:center;
+    font-size:18px;color:#fff;font-weight:700;
+    flex-shrink:0;
+  }
+  .header .info{flex:1;line-height:1.2;}
+  .header .name{font-size:16px;font-weight:600;}
+  .header .status{font-size:12px;color:#d9fdd3;}
+  .header .icons{display:flex;gap:18px;font-size:18px;opacity:.95;}
+
+  .chat-area{
+    flex:1;
+    overflow-y:auto;
+    padding:14px 10px;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(0,0,0,0.02) 1px, transparent 1px),
+      radial-gradient(circle at 70% 60%, rgba(0,0,0,0.02) 1px, transparent 1px);
+    background-size:40px 40px;
+    display:flex;
+    flex-direction:column;
+    gap:6px;
+  }
+  .day-chip{
+    align-self:center;
+    background:#E1F3FB;
+    color:#54656f;
+    font-size:12px;
+    padding:5px 12px;
+    border-radius:8px;
+    margin:6px 0 10px;
+  }
+  .bubble{
+    max-width:78%;
+    padding:7px 9px 8px 10px;
+    border-radius:8px;
+    font-size:14.5px;
+    line-height:1.35;
+    position:relative;
+    box-shadow:0 1px 0.5px rgba(0,0,0,.13);
+    white-space:pre-wrap;
+    word-wrap:break-word;
+  }
+  .bubble.in{
+    background:var(--bubble-in);
+    align-self:flex-start;
+    border-top-left-radius:0;
+  }
+  .bubble.out{
+    background:var(--bubble-out);
+    align-self:flex-end;
+    border-top-right-radius:0;
+  }
+  .bubble .time{
+    display:block;
+    text-align:right;
+    font-size:10.5px;
+    color:var(--text-muted);
+    margin-top:3px;
+  }
+  .bubble.out .time{color:#4a7d4a;}
+  .bubble .time .ticks{color:#53bdeb;margin-left:3px;}
+
+  .quick-replies{
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+    margin:2px 0 8px 2px;
+    align-self:flex-start;
+    max-width:85%;
+  }
+  .qr-btn{
+    background:#fff;
+    border:1px solid #d1d7db;
+    color:var(--wa-teal-light);
+    font-size:12.5px;
+    font-weight:600;
+    padding:6px 10px;
+    border-radius:16px;
+    cursor:pointer;
+  }
+  .qr-btn:hover{background:#f0fdf4;}
+
+  .typing{
+    align-self:flex-start;
+    background:#fff;
+    padding:10px 14px;
+    border-radius:8px;
+    border-top-left-radius:0;
+    display:flex;
+    gap:4px;
+  }
+  .typing span{
+    width:6px;height:6px;border-radius:50%;
+    background:#9aa5aa;
+    animation:blink 1.2s infinite ease-in-out;
+  }
+  .typing span:nth-child(2){animation-delay:.2s;}
+  .typing span:nth-child(3){animation-delay:.4s;}
+  @keyframes blink{0%,80%,100%{opacity:.3;}40%{opacity:1;}}
+
+  .input-bar{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:8px 10px;
+    background:#f0f0f0;
+  }
+  .input-wrap{
+    flex:1;
+    background:#fff;
+    border-radius:24px;
+    display:flex;
+    align-items:center;
+    padding:6px 6px 6px 16px;
+    gap:8px;
+  }
+  .input-wrap input{
+    flex:1;
+    border:none;
+    outline:none;
+    font-size:14.5px;
+    padding:4px 0;
+    background:transparent;
+  }
+  .icon-btn{
+    font-size:19px;
+    color:#54656f;
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:2px 4px;
+  }
+  .send-btn{
+    width:38px;height:38px;
+    border-radius:50%;
+    background:var(--wa-header);
+    color:#fff;
+    border:none;
+    font-size:16px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-shrink:0;
+  }
+  .badge{
+    position:absolute;
+    top:-10px; left:50%; transform:translateX(-50%);
+    background:#111;
+    color:#fff;
+    font-size:11px;
+    padding:4px 10px;
+    border-radius:10px;
+    white-space:nowrap;
+  }
+  .disclaimer{
+    text-align:center;
+    color:#8a8f8f;
+    font-size:11px;
+    margin-top:12px;
+    max-width:390px;
+  }
+  .wrap-col{display:flex;flex-direction:column;align-items:center;}
+</style>
+</head>
+<body>
+<div class="wrap-col">
+<div class="phone">
+  <span class="badge">Prototype — not the real WhatsApp app</span>
+  <div class="statusbar">
+    <span>9:41</span>
+    <span>🔋 100%</span>
+  </div>
+  <div class="header">
+    <span class="back">←</span>
+    <div class="avatar">🌸</div>
+    <div class="info">
+      <div class="name">FertiliSense Clinic</div>
+      <div class="status" id="statusLine">online</div>
+    </div>
+    <div class="icons">
+      <span>📹</span><span>📞</span><span>⋮</span>
+    </div>
+  </div>
+
+  <div class="chat-area" id="chatArea">
+    <div class="day-chip">TODAY</div>
+  </div>
+
+  <div class="input-bar">
+    <button class="icon-btn">😊</button>
+    <div class="input-wrap">
+      <input id="msgInput" type="text" placeholder="Type a message" autocomplete="off">
+      <button class="icon-btn">📎</button>
+      <button class="icon-btn">📷</button>
+    </div>
+    <button class="send-btn" id="sendBtn">➤</button>
+  </div>
+</div>
+<div class="disclaimer">Demo chatbot UI styled after WhatsApp for illustration only. To go live, connect this flow to the official WhatsApp Business Platform (Meta Cloud API) or a provider like Twilio/Gupshup.</div>
+</div>
+
+<script>
+const chatArea = document.getElementById('chatArea');
+const msgInput = document.getElementById('msgInput');
+const sendBtn = document.getElementById('sendBtn');
+const statusLine = document.getElementById('statusLine');
+
+function timeNow(){
+  const d = new Date();
+  let h = d.getHours(), m = d.getMinutes();
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  h = h % 12; if(h===0) h = 12;
+  m = m < 10 ? '0'+m : m;
+  return h+':'+m+' '+ampm;
+}
+
+function addBubble(text, who, withTicks=true){
+  const b = document.createElement('div');
+  b.className = 'bubble ' + who;
+  const time = document.createElement('span');
+  time.className = 'time';
+  time.innerHTML = timeNow() + (who==='out' ? ' <span class="ticks">✓✓</span>' : '');
+  b.appendChild(document.createTextNode(text));
+  b.appendChild(document.createElement('br'));
+  b.appendChild(time);
+  chatArea.appendChild(b);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function addQuickReplies(options){
+  const wrap = document.createElement('div');
+  wrap.className = 'quick-replies';
+  options.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'qr-btn';
+    btn.textContent = opt.label;
+    btn.onclick = () => handleUserInput(opt.value, opt.label);
+    wrap.appendChild(btn);
+  });
+  chatArea.appendChild(wrap);
+  chatArea.scrollTop = chatArea.scrollHeight;
+}
+
+function showTyping(cb, delay=900){
+  statusLine.textContent = 'typing…';
+  const t = document.createElement('div');
+  t.className = 'typing';
+  t.id = 'typingBubble';
+  t.innerHTML = '<span></span><span></span><span></span>';
+  chatArea.appendChild(t);
+  chatArea.scrollTop = chatArea.scrollHeight;
+  setTimeout(()=>{
+    t.remove();
+    statusLine.textContent = 'online';
+    cb();
+  }, delay);
+}
+
+const MENU_TEXT =
+`Welcome to FertiliSense Clinic 🌸
+How can we help you today?
+
+1️⃣ Book Appointment
+2️⃣ IVF Treatment
+3️⃣ IUI Treatment
+4️⃣ Fertility Assessment
+5️⃣ Treatment Cost
+6️⃣ Talk to Counselor
+7️⃣ Clinic Location
+
+Reply with a number (1-7) anytime to continue.`;
+
+const QUICK_OPTIONS = [
+  {label:'1️⃣ Book Appointment', value:'1'},
+  {label:'2️⃣ IVF Treatment', value:'2'},
+  {label:'3️⃣ IUI Treatment', value:'3'},
+  {label:'4️⃣ Fertility Assessment', value:'4'},
+  {label:'5️⃣ Treatment Cost', value:'5'},
+  {label:'6️⃣ Talk to Counselor', value:'6'},
+  {label:'7️⃣ Clinic Location', value:'7'},
+];
+
+const RESPONSES = {
+  '1': `Great, let's get you booked! 🗓️
+Please share:
+• Preferred date & time
+• Your name
+• Contact number
+
+Our team will confirm your slot shortly. You can also reply "menu" to go back.`,
+  '2': `IVF (In Vitro Fertilisation) 👶
+We offer a full IVF program including ovarian stimulation, egg retrieval, fertilization, and embryo transfer, guided by our fertility specialists.
+
+Would you like to:
+1️⃣ Book an IVF consultation
+5️⃣ See treatment cost
+6️⃣ Talk to a counselor first`,
+  '3': `IUI (Intrauterine Insemination) 🩺
+A simpler, less invasive fertility treatment often recommended before IVF, depending on your diagnosis.
+
+Reply:
+1️⃣ Book an IUI consultation
+5️⃣ See treatment cost
+6️⃣ Talk to a counselor first`,
+  '4': `Fertility Assessment 🔬
+This includes hormone panels, ultrasound scans, and a review of your medical history to understand the best path forward.
+
+Reply "1" to book your assessment, or "6" to speak with a counselor about what's involved.`,
+  '5': `Treatment Cost 💰
+Costs vary based on your diagnosis and treatment plan. Our counselor can share an accurate estimate after understanding your case.
+
+Reply "6" to talk to a counselor, or "1" to book a consultation.`,
+  '6': `Connecting you to a counselor 🤝
+One of our patient counselors will join this chat shortly to answer your questions personally.
+
+In the meantime, feel free to share a bit about what you're looking for.`,
+  '7': `Clinic Location 📍
+FertiliSense Clinic
+2nd Floor, Wellness Tower, Anna Salai, Chennai
+
+🕒 Mon–Sat, 9:00 AM – 7:00 PM
+Reply "1" to book a visit.`,
+};
+
+function normalize(raw){
+  const t = raw.trim().toLowerCase();
+  if(['menu','hi','hello','start','help'].includes(t)) return 'menu';
+  if(['1','2','3','4','5','6','7'].includes(t)) return t;
+  // loose keyword matching
+  if(t.includes('appoint')) return '1';
+  if(t.includes('ivf')) return '2';
+  if(t.includes('iui')) return '3';
+  if(t.includes('assess')) return '4';
+  if(t.includes('cost') || t.includes('price') || t.includes('fee')) return '5';
+  if(t.includes('counsel') || t.includes('talk')) return '6';
+  if(t.includes('location') || t.includes('address') || t.includes('clinic')) return '7';
+  return 'fallback';
+}
+
+function handleUserInput(rawValue, displayLabel){
+  addBubble(displayLabel || rawValue, 'out');
+  msgInput.value = '';
+  const key = normalize(String(rawValue));
+  showTyping(()=>{
+    if(key === 'menu'){
+      addBubble(MENU_TEXT, 'in');
+      addQuickReplies(QUICK_OPTIONS);
+    } else if(RESPONSES[key]){
+      addBubble(RESPONSES[key], 'in');
+      addQuickReplies(QUICK_OPTIONS);
+    } else {
+      addBubble(`Sorry, I didn't quite get that 🙏
+Please reply with a number from 1-7, or type "menu" to see all options again.`, 'in');
+    }
+  });
+}
+
+sendBtn.onclick = () => {
+  const val = msgInput.value.trim();
+  if(!val) return;
+  handleUserInput(val);
+};
+msgInput.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){ sendBtn.click(); }
+});
+
+// initial auto-greeting when a "patient" opens the chat
+window.addEventListener('load', ()=>{
+  showTyping(()=>{
+    addBubble(MENU_TEXT, 'in');
+    addQuickReplies(QUICK_OPTIONS);
+  }, 700);
+});
+</script>
+</body>
+</html>
